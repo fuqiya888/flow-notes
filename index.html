@@ -1079,7 +1079,13 @@ function rebuildFontFamily(latin, cjk) {
   };
   const latinPart = latinMap[latin] || "system-ui, -apple-system";
   const cjkPart = CJK_FONTS[cjk] || CJK_FONTS.system;
-  document.documentElement.style.setProperty('--font-family', `${latinPart}, ${cjkPart}, sans-serif`);
+  const full = `${latinPart}, ${cjkPart}, sans-serif`;
+  // 同时设置 CSS 变量和 body 内联样式，确保一定生效
+  document.documentElement.style.setProperty('--font-family', full);
+  document.body.style.fontFamily = full;
+  document.getElementById('editor').style.fontFamily = full;
+  // 更新所有笔记卡片和输入框
+  document.querySelectorAll('.note-card-preview, .search-input').forEach(el => el.style.fontFamily = full);
 }
 
 function applySize(s) {
@@ -1092,12 +1098,17 @@ document.querySelectorAll('[data-font]').forEach(c => c.addEventListener('click'
 document.querySelectorAll('[data-cjk]').forEach(c => c.addEventListener('click', () => applyCJK(c.dataset.cjk)));
 document.querySelectorAll('.fp-size').forEach(c => c.addEventListener('click', () => applySize(c.dataset.size)));
 
+// ── 字体缓存清理（v2）：一次性强制清除所有旧缓存 ──
+if (localStorage.getItem('flow_fontcache_v2') !== 'cleaned') {
+  localStorage.removeItem('flow_font');
+  localStorage.removeItem('flow_cjk');
+  localStorage.removeItem('flow_size');
+  localStorage.setItem('flow_fontcache_v2', 'cleaned');
+}
+
 applyFont(localStorage.getItem('flow_font') || 'system');
-// 迁移旧缓存值
-const oldCJK = localStorage.getItem('flow_cjk') || 'system';
-if (!['system','songti','heiti','kaiti','fangsong','notoSans','notoSerif'].includes(oldCJK)) localStorage.setItem('flow_cjk', 'system');
 applyCJK(localStorage.getItem('flow_cjk') || 'system');
-applySize(localStorage.getItem('flow_size') || 16);
+applySize(parseInt(localStorage.getItem('flow_size')) || 16);
 
 // ── Theme ─────────────────────────────────────────────────────────────────
 const themeClass = { green: 'theme-green', warm: 'theme-warm', night: 'theme-night' };
