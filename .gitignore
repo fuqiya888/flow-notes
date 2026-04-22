@@ -1,0 +1,7 @@
+# Debug/test files
+font-test.html
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini

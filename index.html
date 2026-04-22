@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Poppins:wght@300;400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-sidebar: #F2F6F5;
+      --bg-main: #FDFDFD;
+      --bg-card: #FFFFFF;
+      --bg-card-hover: #F7FAF9;
+      --accent: #5B7F7B;
+      --text: #2D3B39;
+      --text-muted: #9AA8A6;
+      --border: rgba(91,127,123,0.10);
+      --shadow: 0 1px 3px rgba(0,0,0,0.04);
+      --shadow-hover: 0 3px 10px rgba(0,0,0,0.07);
+      --font-size: 16px;
+      --font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      --sidebar-width: 33.33%;
+    }
+    /* 三套主题配色 */
+    body.theme-green { --bg-sidebar:#F2F6F5; --bg-main:#FDFDFD; --bg-card:#FFFFFF; --bg-card-hover:#F7FAF9; --accent:#5B7F7B; --text:#2D3B39; --text-muted:#9AA8A6; --border:rgba(91,127,123,0.10); }
+    body.theme-warm  { --bg-sidebar:#FEF3F0; --bg-main:#FFFCFA; --bg-card:#FFF8F2; --bg-card-hover:#FFF2EB; --accent:#8B6F5E; --text:#3E2E25; --text-muted:#B0998C; --border:rgba(139,111,94,0.10); }
+    body.theme-night { --bg-sidebar:#EEF1FA; --bg-main:#F9F9FF; --bg-card:#F4F5FE; --bg-card-hover:#ECEEF8; --accent:#5B6AAF; --text:#2D3040; --text-muted:#8B8FAA; --border:rgba(91,106,175,0.10); }
+
+    /* 西文字体和中文字体统一由 JS rebuildFontFamily 控制，不再用 CSS class */
+
+    body {
+      font-family: var(--font-family); font-size: var(--font-size);
+      height: 100vh; display: flex; flex-direction: column;
+      background: var(--bg-main); color: var(--text);
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 52px; min-height: 52px;
+      background: var(--bg-main); border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: 'Inter', sans-serif; font-weight: 500;
+      font-size: 20px; color: #5B7F7B; letter-spacing: 2px;
+      user-select: none;
+    }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    /* Font panel */
+    .font-btn {
+      font-size: 13px; font-weight: 500; color: var(--text-muted);
+      cursor: pointer; padding: 3px 8px; border-radius: 6px;
+      border: 1px solid transparent; transition: all 0.2s;
+      position: relative; user-select: none;
+    }
+    .font-btn:hover { border-color: var(--border); color: var(--text); }
+    .font-panel {
+      display: none; position: absolute; top: 48px; right: 24px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px; z-index: 200;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08); min-width: 190px;
+    }
+    .font-panel.open { display: block; }
+    .font-panel-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .fp-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+    .fp-chip {
+      padding: 3px 10px; border-radius: 20px; font-size: 12px;
+      border: 1px solid var(--border); cursor: pointer;
+      transition: all 0.15s; color: var(--text);
+    }
+    .fp-chip.active, .fp-chip:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .fp-size-row { display: flex; gap: 6px; }
+    .fp-size {
+      flex: 1; text-align: center; padding: 4px 0; border-radius: 8px;
+      font-size: 12px; border: 1px solid var(--border); cursor: pointer;
+      color: var(--text); transition: all 0.15s;
+    }
+    .fp-size.active, .fp-size:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* Lang & Export */
+    .header-btn {
+      font-size: 12px; color: var(--text-muted); cursor: pointer;
+      padding: 3px 8px; border-radius: 6px; border: 1px solid transparent;
+      transition: all 0.2s; user-select: none; background: none;
+    }
+    .header-btn:hover { border-color: var(--border); color: var(--text); }
+
+    /* Theme dots */
+    .theme-switcher { display: flex; gap: 8px; align-items: center; }
+    .theme-dot {
+      width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+      border: 2px solid rgba(0,0,0,0.15); transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .theme-dot:hover, .theme-dot.active {
+      border-color: var(--text); transform: scale(1.15);
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.06);
+    }
+    .theme-dot.t-green { background: #7bbf8a; }
+    .theme-dot.t-warm  { background: #e8a090; }
+    .theme-dot.t-night { background: #8b9de8; }
+    .export-dropdown {
+      position: relative;
+    }
+    .export-menu {
+      display: none; position: absolute; top: 100%; right: 0; margin-top: 4px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 6px; z-index: 200; min-width: 170px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .export-menu.open { display: block; }
+    .export-menu-item {
+      display: block; width: 100%; text-align: left; padding: 8px 12px;
+      border: none; background: none; border-radius: 6px; cursor: pointer;
+      font-size: 13px; color: var(--text); transition: background 0.15s;
+    }
+    .export-menu-item:hover { background: var(--bg-card-hover); }
+    .export-menu-item + .export-menu-item { margin-top: 2px; }
+
+    /* ── Main Layout ─────────────────────────────────────────── */
+    main { flex: 1; display: flex; overflow: hidden; }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width); min-width: var(--sidebar-width);
+      background: var(--bg-sidebar); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; transition: width 0.3s, min-width 0.3s;
+    }
+    .sidebar.collapsed { width: 0; min-width: 0; overflow: hidden; }
+    .sidebar-header { padding: 14px 16px 10px; }
+    .search-input {
+      width: 100%; padding: 8px 12px 8px 32px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg-card);
+      font-size: 13px; color: var(--text); outline: none;
+      font-family: var(--font-family); transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-wrap { position: relative; }
+    .search-icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      font-size: 13px; color: var(--text-muted); pointer-events: none;
+    }
+
+    .notes-list {
+      flex: 1; overflow-y: auto; padding: 6px 10px 16px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .empty-hint {
+      color: var(--text-muted); font-size: 13px; text-align: center;
+      margin-top: 80px; line-height: 1.8;
+    }
+    .note-card {
+      background: var(--bg-card); border-radius: 8px; padding: 12px 14px;
+      box-shadow: var(--shadow); user-select: text; cursor: text;
+      transition: box-shadow 0.2s, background 0.15s;
+      position: relative;
+    }
+    .note-card:hover { box-shadow: var(--shadow-hover); background: var(--bg-card-hover); }
+    .note-card:hover .card-del { opacity: 1; }
+    .card-del {
+      position: absolute; top: 8px; right: 8px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: transparent; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: var(--text-muted); opacity: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+    .card-del:hover { color: #E57373; background: rgba(229,115,115,0.10); }
+    .note-card-preview {
+      font-size: 14px; color: var(--text); line-height: 1.5;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      padding-right: 20px;
+      transition: all 0.2s;
+    }
+    .note-card.expanded .note-card-preview {
+      white-space: pre-wrap; word-break: break-word;
+      max-height: 60vh; overflow-y: auto;
+    }
+    .note-card-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── Editor Pane ─────────────────────────────────────────── */
+    .editor-pane {
+      flex: 1; display: flex; flex-direction: column; padding: 24px 32px;
+      min-width: 0;
+    }
+    textarea {
+      flex: 1; background: transparent; border: none; outline: none;
+      resize: none; font-size: var(--font-size); line-height: 1.8;
+      color: var(--text); font-family: var(--font-family);
+    }
+    textarea::placeholder { color: var(--text-muted); }
+
+    .editor-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 12px; border-top: 1px solid var(--border); margin-top: 8px;
+    }
+    .save-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-muted); cursor: pointer;
+      user-select: none; padding: 2px 0;
+    }
+    .save-status-icon {
+      width: 14px; height: 14px; display: inline-flex;
+      align-items: center; justify-content: center; font-size: 12px;
+    }
+    .save-status-icon.saving { color: #aaa; }
+    .save-status-icon.saved  { color: #4CAF50; }
+    .save-status-icon.error  { color: #E57373; }
+    .save-status-text { font-size: 11px; }
+
+    .btn-row { display: flex; gap: 8px; align-items: center; }
+    .btn-action {
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px;
+      background: transparent; color: var(--text-muted); font-size: 12px;
+      cursor: pointer; transition: all 0.2s; font-family: var(--font-family);
+    }
+    .btn-action:hover { border-color: var(--text-muted); color: var(--text); }
+    .btn-action:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-action:disabled:hover { border-color: var(--border); color: var(--text-muted); }
+    .btn-save {
+      padding: 6px 18px; background: var(--accent); color: #fff;
+      border: none; border-radius: 6px; font-size: 12px; cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s; font-family: var(--font-family);
+    }
+    .btn-save:hover { opacity: 0.85; }
+    .btn-save:active { transform: scale(0.97); }
+
+    /* ── Confirm Dialog ──────────────────────────────────────── */
+    .confirm-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.25); align-items: center; justify-content: center;
+    }
+    .confirm-overlay.open { display: flex; }
+    .confirm-dialog {
+      background: var(--bg-card); border-radius: 14px; padding: 28px 32px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.12); max-width: 360px; width: 90%;
+    }
+    .confirm-title {
+      font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 8px;
+    }
+    .confirm-msg {
+      font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px;
+    }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .confirm-btn {
+      padding: 7px 20px; border-radius: 8px; font-size: 13px;
+      cursor: pointer; border: 1px solid var(--border);
+      transition: all 0.15s; font-family: var(--font-family);
+    }
+    .confirm-btn-cancel {
+      background: transparent; color: var(--text-muted);
+    }
+    .confirm-btn-cancel:hover { color: var(--text); border-color: var(--text-muted); }
+    .confirm-btn-ok {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .confirm-btn-ok:hover { opacity: 0.85; }
+
+    /* ── Trash (回收站) ─────────────────────────────────────── */
+    .trash-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.25); align-items: center; justify-content: center;
+    }
+    .trash-overlay.open { display: flex; }
+    .trash-dialog {
+      background: var(--bg-card); border-radius: 14px; padding: 24px 28px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.12); max-width: 420px; width: 90%;
+      max-height: 70vh; display: flex; flex-direction: column;
+    }
+    .trash-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .trash-title { font-size: 16px; font-weight: 500; color: var(--text); }
+    .trash-clear-btn {
+      font-size: 12px; color: var(--text-muted); cursor: pointer;
+      padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; transition: all 0.15s; font-family: var(--font-family);
+    }
+    .trash-clear-btn:hover { border-color: #E57373; color: #E57373; }
+    .trash-list {
+      flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
+      min-height: 60px;
+    }
+    .trash-item {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg-main); border-radius: 8px; padding: 10px 12px;
+      border: 1px solid var(--border);
+    }
+    .trash-item-text {
+      font-size: 13px; color: var(--text); line-height: 1.4;
+      flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-right: 10px;
+    }
+    .trash-item-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; margin-right: 10px; }
+    .trash-item-restore {
+      font-size: 12px; color: var(--accent); cursor: pointer;
+      padding: 2px 10px; border-radius: 4px; border: 1px solid var(--accent);
+      background: transparent; white-space: nowrap; transition: all 0.15s;
+      font-family: var(--font-family);
+    }
+    .trash-item-restore:hover { background: var(--accent); color: #fff; }
+    .trash-empty {
+      color: var(--text-muted); font-size: 13px; text-align: center;
+      padding: 20px 0;
+    }
+    .trash-close-row { margin-top: 16px; text-align: right; }
+    .trash-close-btn {
+      font-size: 13px; color: var(--text-muted); cursor: pointer;
+      padding: 5px 16px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; transition: all 0.15s; font-family: var(--font-family);
+    }
+    .trash-close-btn:hover { border-color: var(--text-muted); color: var(--text); }
+
+    /* ── Toast ───────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: rgba(0,0,0,0.62); color: #fff;
+      padding: 8px 20px; border-radius: 20px; font-size: 13px;
+      opacity: 0; transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none; z-index: 1000;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .sidebar { position: absolute; z-index: 100; height: calc(100vh - 52px); }
+      .sidebar.collapsed { width: 0; min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;gap:14px">
+    <button class="header-btn" id="toggleSidebar" title="折叠/展开列表">☰</button>
+    <span class="logo">Flow</span>
+  </div>
+  <div class="header-right">
+    <span class="font-btn" id="fontBtn">Aa</span>
+    <div class="theme-switcher">
+      <div class="theme-dot t-green active" data-theme="green" title="春日田野"></div>
+      <div class="theme-dot t-warm"         data-theme="warm"  title="暮色温柔"></div>
+      <div class="theme-dot t-night"        data-theme="night" title="星空沉思"></div>
+    </div>
+    <span class="header-btn" id="langBtn">EN</span>
+    <div class="export-dropdown">
+      <button class="header-btn" id="exportBtn" data-i18n="exportMenu">导出 ▾</button>
+      <div class="export-menu" id="exportMenu">
+        <button class="export-menu-item" id="exportJson" data-i18n="exportJson">导出所有数据</button>
+        <button class="export-menu-item" id="exportTxt" data-i18n="exportTxt">导出为纯文本</button>
+        <label class="export-menu-item" data-i18n="importData" style="margin:0;cursor:pointer">
+          <span data-i18n="importData">导入数据</span>
+          <input type="file" id="importFile" accept=".json,.txt" style="display:none">
+        </label>
+      </div>
+    </div>
+    <span class="header-btn" id="trashBtn" title="回收站">🗑️</span>
+  </div>
+</header>
+
+<div class="font-panel" id="fontPanel">
+  <div class="fp-label" data-i18n="fontFamily">字体</div>
+  <div class="font-panel-row">
+    <span class="fp-chip active" data-font="system" data-i18n="fontSystem">系统默认</span>
+    <span class="fp-chip" data-font="inter">Inter</span>
+    <span class="fp-chip" data-font="poppins">Poppins</span>
+    <span class="fp-chip" data-font="lato">Lato</span>
+  </div>
+  <div class="fp-label" data-i18n="fontChinese">中文字体</div>
+  <div class="font-panel-row">
+    <span class="fp-chip active" data-cjk="system" data-i18n="fontCjkSystem">系统</span>
+    <span class="fp-chip" data-cjk="notoSans">思源黑体</span>
+    <span class="fp-chip" data-cjk="notoSerif">思源宋体</span>
+    <span class="fp-chip" data-cjk="heiti">黑体</span>
+    <span class="fp-chip" data-cjk="songti">宋体</span>
+    <span class="fp-chip" data-cjk="kaiti">楷体</span>
+    <span class="fp-chip" data-cjk="fangsong">仿宋</span>
+  </div>
+  <div class="fp-label" data-i18n="fontSize">字号</div>
+  <div class="fp-size-row">
+    <span class="fp-size" data-size="14">小</span>
+    <span class="fp-size active" data-size="16">默认</span>
+    <span class="fp-size" data-size="18">大</span>
+  </div>
+</div>
+
+<main>
+  <!-- 左侧：笔记列表 -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInput" placeholder="搜索笔记…" data-i18n-ph="search" autocomplete="off">
+      </div>
+    </div>
+    <div class="notes-list" id="notesList"></div>
+  </div>
+
+  <!-- 右侧：主书写区 -->
+  <div class="editor-pane" id="editorPane">
+    <textarea id="editor" placeholder="在这里写下你的想法…" data-i18n-ph="placeholder"></textarea>
+    <div class="editor-footer">
+      <div class="save-status" id="saveStatus" title="">
+        <span class="save-status-icon saved" id="saveIcon">✓</span>
+        <span class="save-status-text" id="saveText" data-i18n="saved">已保存</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn-save" id="btnSave" data-i18n="save">保存</button>
+        <button class="btn-action" id="btnClear" data-i18n="clear">清空</button>
+        <button class="btn-action" id="btnDelete" data-i18n="delete" disabled>删除</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 确认弹窗 -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-dialog">
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-actions">
+      <button class="confirm-btn confirm-btn-cancel" id="confirmCancel" data-i18n="cancel">取消</button>
+      <button class="confirm-btn confirm-btn-ok" id="confirmOk" data-i18n="confirm">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- 回收站弹窗 -->
+<div class="trash-overlay" id="trashOverlay">
+  <div class="trash-dialog">
+    <div class="trash-header">
+      <span class="trash-title" data-i18n="trashTitle">回收站</span>
+      <button class="trash-clear-btn" id="trashClearBtn" data-i18n="trashClear">清空回收站</button>
+    </div>
+    <div class="trash-list" id="trashList"></div>
+    <div class="trash-close-row">
+      <button class="trash-close-btn" id="trashCloseBtn" data-i18n="cancel">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── i18n ──────────────────────────────────────────────────────────────────
+const I18N = {
+  zh: {
+    writing:'书写区', save:'保存', placeholder:'在这里写下你的想法…', fontFamily:'西文字体', fontChinese:'中文字体', fontSize:'字号',
+    fontSystem:'系统默认', fontCjkSystem:'系统', empty:'还没有笔记，开始书写吧 ✍️', search:'搜索笔记…',
+    imported:'已载入编辑', saved:'已保存', saving:'保存中…', saveFailed:'保存失败',
+    exportMenu:'导出 ▾', exportJson:'导出所有数据', exportTxt:'导出为纯文本',
+    importData:'导入数据', exportDone:'已导出 JSON', exportTxtDone:'已导出文本',
+    importDone:'导入成功', importErr:'导入失败，请检查文件格式（支持 .json 和 .txt）',
+    clearTitle:'清空书写区', clearMsg:'确定清空？内容将丢失且不可恢复。',
+    deleteTitle:'删除笔记', deleteMsg:'删除后可在回收站中恢复。',
+    cancel:'取消', confirm:'确认',
+    clear:'清空', delete:'删除',
+    trashTitle:'回收站', trashEmpty:'回收站是空的', trashRestore:'恢复', trashClear:'清空回收站',
+    restoreDone:'已恢复', trashCleared:'回收站已清空', trashHint:'删除的笔记可在回收站中恢复',
+  },
+  en: {
+    writing:'Writing', save:'Save', placeholder:'Write your thoughts here…', fontFamily:'Font', fontChinese:'CJK Font', fontSize:'Size',
+    fontSystem:'System', fontCjkSystem:'System', empty:'No notes yet. Start writing!', search:'Search notes…',
+    imported:'Loaded', saved:'Saved', saving:'Saving…', saveFailed:'Save failed',
+    exportMenu:'Export ▾', exportJson:'Export all data', exportTxt:'Export as text',
+    importData:'Import data', exportDone:'JSON exported', exportTxtDone:'Text exported',
+    importDone:'Import successful', importErr:'Import failed (supports .json and .txt)',
+    clearTitle:'Clear editor', clearMsg:'Are you sure? Content will be lost and cannot be recovered.',
+    deleteTitle:'Delete note', deleteMsg:'Deleted notes can be restored from trash.',
+    cancel:'Cancel', confirm:'Confirm',
+    clear:'Clear', delete:'Delete',
+    trashTitle:'Trash', trashEmpty:'Trash is empty', trashRestore:'Restore', trashClear:'Empty trash',
+    restoreDone:'Restored', trashCleared:'Trash cleared', trashHint:'Deleted notes can be restored from trash',
+  }
+};
+let lang = localStorage.getItem('flow_lang') || 'zh';
+function t(k) { return (I18N[lang] || I18N.zh)[k] || k; }
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+  document.getElementById('searchInput').placeholder = t('search');
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  document.getElementById('exportBtn').textContent = t('exportMenu');
+  const sizeLabels = lang === 'zh' ? ['小','默认','大'] : ['S','M','L'];
+  document.querySelectorAll('.fp-size').forEach((el, i) => el.textContent = sizeLabels[i]);
+}
+
+// ── UUID v4 ──────────────────────────────────────────────────────────────
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+// ── Storage（IndexedDB）───────────────────────────────────────────────────
+let db = null;
+const DB_NAME = 'FlowNotesDB';
+const STORE = 'notes';
+
+function openDB() {
+  return new Promise(resolve => {
+    try {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = e => {
+        const store = e.target.result.createObjectStore(STORE, { keyPath: 'id' });
+        store.createIndex('updatedAt', 'updatedAt', { unique: false });
+      };
+      req.onsuccess = e => { db = e.target.result; resolve(true); };
+      req.onerror = () => resolve(false);
+    } catch { resolve(false); }
+  });
+}
+function dbGetAll() {
+  return new Promise(resolve => {
+    const tx = db.transaction(STORE, 'readonly');
+    const store = tx.objectStore(STORE);
+    const idx = store.index('updatedAt');
+    const req = idx.openCursor(null, 'prev'); // 按 updatedAt 降序
+    const results = [];
+    req.onsuccess = e => {
+      const cursor = e.target.result;
+      if (cursor) { results.push(cursor.value); cursor.continue(); }
+      else resolve(results);
+    };
+    req.onerror = () => resolve([]);
+  });
+}
+function dbPut(note) {
+  return new Promise(resolve => {
+    db.transaction(STORE, 'readwrite').objectStore(STORE).put(note).onsuccess = () => resolve();
+  });
+}
+function dbDelete(id) {
+  return new Promise(resolve => {
+    db.transaction(STORE, 'readwrite').objectStore(STORE).delete(id).onsuccess = () => resolve();
+  });
+}
+function dbGetAllForMerge() {
+  return new Promise(resolve => {
+    db.transaction(STORE, 'readonly').objectStore(STORE).getAll().onsuccess = e => resolve(e.target.result || []);
+  });
+}
+
+// ── State ────────────────────────────────────────────────────────────────
+let notes = [];
+let trash = []; // 回收站（localStorage 持久化）
+let editingId = null;
+let saveDebounceTimer = null;
+let searchQuery = '';
+let isSwitchingNote = false;
+
+const editor       = document.getElementById('editor');
+const notesList    = document.getElementById('notesList');
+const sidebar      = document.getElementById('sidebar');
+const toastEl      = document.getElementById('toast');
+const btnSaveIcon  = document.getElementById('saveIcon');
+const btnSaveText  = document.getElementById('saveText');
+const saveStatus   = document.getElementById('saveStatus');
+const btnSave      = document.getElementById('btnSave');
+const btnClear     = document.getElementById('btnClear');
+const btnDelete    = document.getElementById('btnDelete');
+
+// ── Helpers ──────────────────────────────────────────────────────────────
+function fmt(ts) {
+  const d = ts != null ? new Date(ts) : new Date();
+  return d.toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+}
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function preview(text) {
+  const clean = text.replace(/^[\s\n\t]+|[\s\n\t]+$/g, '').replace(/[\n\t]+| {2,}/g, ' ');
+  if (!clean) return lang === 'zh' ? '空白笔记' : 'Blank note';
+  return clean.length > 15 ? clean.slice(0, 15) + '…' : clean;
+}
+function isBlank(text) {
+  return !text || text.replace(/[\s\n\r\t]/g, '').length === 0;
+}
+function setSaveStatus(state) {
+  // state: 'saved' | 'saving' | 'error'
+  btnSaveIcon.className = 'save-status-icon ' + state;
+  btnSaveIcon.textContent = state === 'saved' ? '✓' : state === 'saving' ? '○' : '⚠';
+  btnSaveText.textContent = t(state === 'saved' ? 'saved' : state === 'saving' ? 'saving' : 'saveFailed');
+  saveStatus.title = state === 'saved' ? (lang === 'zh' ? '点击立即保存' : 'Click to save now') : '';
+}
+
+let toastTimer;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+}
+
+// ── Confirm Dialog ───────────────────────────────────────────────────────
+function showConfirm(title, msg) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmCancel').textContent = t('cancel');
+    document.getElementById('confirmOk').textContent = t('confirm');
+    overlay.classList.add('open');
+
+    function cleanup() {
+      overlay.classList.remove('open');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onBg);
+    }
+    function onOk() { cleanup(); resolve(true); }
+    function onCancel() { cleanup(); resolve(false); }
+    function onBg(e) { if (e.target === overlay) { cleanup(); resolve(false); } }
+
+    const okBtn = document.getElementById('confirmOk');
+    const cancelBtn = document.getElementById('confirmCancel');
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onBg);
+  });
+}
+
+// ── Render ───────────────────────────────────────────────────────────────
+function render() {
+  notesList.innerHTML = '';
+  const filtered = searchQuery
+    ? notes.filter(n => n.content.toLowerCase().includes(searchQuery.toLowerCase()))
+    : notes;
+
+  if (!filtered.length) {
+    notesList.innerHTML = `<p class="empty-hint">${t('empty')}</p>`;
+    return;
+  }
+
+  filtered.forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    card.innerHTML = `
+      <button class="card-del" data-id="${n.id}" title="${t('delete')}">×</button>
+      <div class="note-card-preview">${esc(n.content)}</div>
+      <div class="note-card-time">${fmt(n.updatedAt)}</div>`;
+
+    // 删除按钮（阻止冒泡，不影响单击/双击）
+    card.querySelector('.card-del').addEventListener('click', async e => {
+      e.stopPropagation();
+      const ok = await showConfirm(t('deleteTitle'), t('deleteMsg'));
+      if (!ok) return;
+      moveToTrash(n);
+    });
+
+    // 单击展开/收起全文，双击进入编辑（用延迟区分）
+    let clickTimer = null;
+    card.addEventListener('click', e => {
+      if (e.target.closest('.card-del')) return;
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; } // 第二次点击，留给 dblclick
+      clickTimer = setTimeout(() => {
+        clickTimer = null;
+        // 单击：切换展开/收起
+        card.classList.toggle('expanded');
+      }, 250);
+    });
+
+    card.addEventListener('dblclick', e => {
+      if (e.target.closest('.card-del')) return;
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+      const sel = window.getSelection().toString();
+      if (sel.length > 20) return; // 拖选了大段文字，视为复制意图
+      window.getSelection().removeAllRanges();
+      loadNoteIntoEditor(n);
+    });
+
+    notesList.appendChild(card);
+  });
+
+  // 更新删除按钮状态
+  btnDelete.disabled = !editingId;
+  // 更新清空按钮状态
+  btnClear.disabled = isBlank(editor.value);
+}
+
+// ── 智能保存置顶（双击/流转前调用）────────────────────────────────────────
+async function flushCurrentEditor() {
+  const text = editor.value;
+  if (isBlank(text)) return; // 空内容直接丢弃
+
+  const now = Date.now();
+  if (editingId) {
+    // 正在编辑已有笔记：仅当内容有变化时更新它
+    const idx = notes.findIndex(n => n.id === editingId);
+    if (idx !== -1 && notes[idx].content !== text) {
+      notes[idx].content = text;
+      notes[idx].updatedAt = now;
+      await dbPut(notes[idx]);
+      notes.sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+  } else {
+    // 书写区有内容但不是已有笔记 → 作为新笔记入库
+    const note = { id: uuid(), content: text, createdAt: now, updatedAt: now };
+    notes.unshift(note);
+    await dbPut(note);
+    notes.sort((a, b) => b.updatedAt - a.updatedAt);
+  }
+}
+
+async function loadNoteIntoEditor(note) {
+  // 标记正在切换笔记，阻止 blur 事件触发 autoSave
+  isSwitchingNote = true;
+
+  // 取消防抖计时器，先同步保存当前内容
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = null;
+  localStorage.removeItem('flow_draft');
+  await flushCurrentEditor();
+
+  // 载入目标笔记
+  editor.value = note.content;
+  editingId = note.id;
+  setSaveStatus('saved');
+  render();
+  editor.focus();
+  showToast(t('imported'));
+
+  // 延迟重置标志，确保 blur 事件不会误触发
+  requestAnimationFrame(() => { isSwitchingNote = false; });
+}
+
+// ── Auto-save（离开焦点 1.5s 防抖）───────────────────────────────────────
+editor.addEventListener('input', () => {
+  clearTimeout(saveDebounceTimer);
+  setSaveStatus('saving');
+  saveDebounceTimer = setTimeout(() => autoSave(), 1500);
+  btnClear.disabled = isBlank(editor.value);
+});
+
+editor.addEventListener('blur', () => {
+  // 如果正在切换笔记（loadNoteIntoEditor 中），跳过 blur 的 autoSave
+  if (isSwitchingNote) return;
+  if (saveDebounceTimer) {
+    clearTimeout(saveDebounceTimer);
+    saveDebounceTimer = null;
+    autoSave();
+  }
+});
+
+// ── 无感自动保存（编辑已有笔记时静默更新；新笔记只缓存草稿）───────────────
+async function autoSave() {
+  const text = editor.value;
+  if (isBlank(text)) { setSaveStatus('saved'); return; }
+
+  setSaveStatus('saving');
+  try {
+    if (editingId) {
+      // 编辑已有笔记：静默更新到 IndexedDB
+      const now = Date.now();
+      const idx = notes.findIndex(n => n.id === editingId);
+      if (idx !== -1) {
+        notes[idx].content = text;
+        notes[idx].updatedAt = now;
+        await dbPut(notes[idx]);
+        notes.sort((a, b) => b.updatedAt - a.updatedAt);
+        render();
+      }
+    } else {
+      // 新笔记：只缓存草稿到 localStorage，不写入 IndexedDB，不显示到列表
+      localStorage.setItem('flow_draft', JSON.stringify({ text }));
+    }
+    setSaveStatus('saved');
+  } catch {
+    setSaveStatus('error');
+  }
+}
+
+// ── 保存按钮 = 最终提交（入库 + 置顶 + 清空书写区）────────────────────────
+async function submitNote() {
+  const text = editor.value;
+  if (isBlank(text)) return;
+
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = null;
+  localStorage.removeItem('flow_draft');
+  setSaveStatus('saving');
+  try {
+    const now = Date.now();
+    if (editingId) {
+      const idx = notes.findIndex(n => n.id === editingId);
+      if (idx !== -1) {
+        notes[idx].content = text;
+        notes[idx].updatedAt = now;
+        await dbPut(notes[idx]);
+      }
+    } else {
+      const note = { id: uuid(), content: text, createdAt: now, updatedAt: now };
+      notes.unshift(note);
+      await dbPut(note);
+    }
+    notes.sort((a, b) => b.updatedAt - a.updatedAt);
+    editor.value = '';
+    editingId = null;
+    btnClear.disabled = true;
+    btnDelete.disabled = true;
+    render();
+    setSaveStatus('saved');
+  } catch {
+    setSaveStatus('error');
+  }
+}
+
+// 手动保存（点击状态图标）
+saveStatus.addEventListener('click', async () => {
+  if (saveDebounceTimer) {
+    clearTimeout(saveDebounceTimer);
+    saveDebounceTimer = null;
+  }
+  await autoSave();
+});
+
+// ── Save button → 提交 ────────────────────────────────────────────────────
+btnSave.addEventListener('click', submitNote);
+
+// ── Clear & Delete ───────────────────────────────────────────────────────
+btnClear.addEventListener('click', async () => {
+  if (isBlank(editor.value)) return;
+  const ok = await showConfirm(t('clearTitle'), t('clearMsg'));
+  if (!ok) return;
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = null;
+  editor.value = '';
+  editingId = null;
+  setSaveStatus('saved');
+  btnClear.disabled = true;
+  render();
+});
+
+btnDelete.addEventListener('click', async () => {
+  if (!editingId) return;
+  const ok = await showConfirm(t('deleteTitle'), t('deleteMsg'));
+  if (!ok) return;
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = null;
+  const note = notes.find(n => n.id === editingId);
+  if (note) moveToTrash(note);
+  editor.value = '';
+  editingId = null;
+  setSaveStatus('saved');
+  btnClear.disabled = true;
+});
+
+// ── 回收站 ──────────────────────────────────────────────────────────────
+function loadTrash() {
+  try { trash = JSON.parse(localStorage.getItem('flow_trash') || '[]'); } catch { trash = []; }
+}
+function saveTrash() {
+  localStorage.setItem('flow_trash', JSON.stringify(trash));
+}
+
+async function moveToTrash(note) {
+  // 从笔记列表和 IndexedDB 中移除
+  await dbDelete(note.id);
+  notes = notes.filter(n => n.id !== note.id);
+  // 加入回收站
+  trash.unshift({ ...note, deletedAt: Date.now() });
+  saveTrash();
+  if (editingId === note.id) {
+    editingId = null;
+    editor.value = '';
+    btnClear.disabled = true;
+  }
+  render();
+}
+
+async function restoreFromTrash(index) {
+  const item = trash[index];
+  if (!item) return;
+  const restored = { id: item.id, content: item.content, createdAt: item.createdAt, updatedAt: Date.now() };
+  notes.unshift(restored);
+  await dbPut(restored);
+  notes.sort((a, b) => b.updatedAt - a.updatedAt);
+  trash.splice(index, 1);
+  saveTrash();
+  render();
+  renderTrash();
+  showToast(t('restoreDone'));
+}
+
+function renderTrash() {
+  const trashList = document.getElementById('trashList');
+  if (!trash.length) {
+    trashList.innerHTML = `<p class="trash-empty">${t('trashEmpty')}</p>`;
+    return;
+  }
+  trashList.innerHTML = '';
+  trash.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'trash-item';
+    el.innerHTML = `
+      <span class="trash-item-text">${esc(preview(item.content))}</span>
+      <span class="trash-item-time">${fmt(item.deletedAt)}</span>
+      <button class="trash-item-restore" data-idx="${i}">${t('trashRestore')}</button>`;
+    el.querySelector('.trash-item-restore').addEventListener('click', () => restoreFromTrash(i));
+    trashList.appendChild(el);
+  });
+}
+
+document.getElementById('trashBtn').addEventListener('click', () => {
+  renderTrash();
+  document.getElementById('trashOverlay').classList.add('open');
+});
+document.getElementById('trashCloseBtn').addEventListener('click', () => {
+  document.getElementById('trashOverlay').classList.remove('open');
+});
+document.getElementById('trashOverlay').addEventListener('click', e => {
+  if (e.target.id === 'trashOverlay') document.getElementById('trashOverlay').classList.remove('open');
+});
+document.getElementById('trashClearBtn').addEventListener('click', async () => {
+  if (!trash.length) return;
+  const ok = await showConfirm(t('trashClear'), t('trashTitle'));
+  if (!ok) return;
+  trash = [];
+  saveTrash();
+  renderTrash();
+  showToast(t('trashCleared'));
+});
+
+// ── Search ───────────────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQuery = e.target.value.trim();
+  render();
+});
+
+// ── Sidebar Toggle ───────────────────────────────────────────────────────
+document.getElementById('toggleSidebar').addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+});
+
+// ── Export / Import ──────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('exportMenu').classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.export-dropdown')) {
+    document.getElementById('exportMenu').classList.remove('open');
+  }
+});
+
+document.getElementById('exportJson').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `flow_backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  document.getElementById('exportMenu').classList.remove('open');
+  showToast(t('exportDone'));
+});
+
+document.getElementById('exportTxt').addEventListener('click', () => {
+  const text = notes.map((n, i) => `---\n[${i + 1}] ${fmt(n.updatedAt)}\n${n.content}`).join('\n\n');
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `flow_notes_${new Date().toISOString().slice(0, 10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  document.getElementById('exportMenu').classList.remove('open');
+  showToast(t('exportTxtDone'));
+});
+
+document.getElementById('importFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const raw = await file.text();
+    const fileName = file.name.toLowerCase();
+    let imported = [];
+
+    if (fileName.endsWith('.json')) {
+      // JSON 备份文件：合并导入
+      const data = JSON.parse(raw);
+      if (!Array.isArray(data)) throw new Error('invalid');
+      const localMap = new Map(notes.map(n => [n.id, n]));
+      for (const item of data) {
+        if (!item.id || !item.content) continue;
+        const existing = localMap.get(item.id);
+        if (existing) {
+          if ((item.updatedAt || 0) > existing.updatedAt) {
+            localMap.set(item.id, item);
+          }
+        } else {
+          localMap.set(item.id, item);
+        }
+      }
+      notes = Array.from(localMap.values());
+      const tx = db.transaction(STORE, 'readwrite');
+      const store = tx.objectStore(STORE);
+      store.clear();
+      for (const n of notes) store.put(n);
+      await new Promise(r => tx.oncomplete = r);
+    } else if (fileName.endsWith('.txt')) {
+      // TXT 文本文件：按 --- 分隔，每段作为一条新笔记
+      const now = Date.now();
+      const blocks = raw.split(/\n---\n/).map(b => b.trim()).filter(b => b.length > 0);
+      if (blocks.length === 0) throw new Error('empty');
+      for (const block of blocks) {
+        const note = { id: uuid(), content: block, createdAt: now, updatedAt: now };
+        imported.push(note);
+        await dbPut(note);
+        notes.push(note);
+      }
+      notes.sort((a, b) => b.updatedAt - a.updatedAt);
+    } else {
+      throw new Error('unsupported');
+    }
+
+    notes.sort((a, b) => b.updatedAt - a.updatedAt);
+    render();
+    showToast(t('importDone'));
+  } catch {
+    showToast(t('importErr'));
+  }
+  e.target.value = '';
+  document.getElementById('exportMenu').classList.remove('open');
+});
+
+// ── Font panel ───────────────────────────────────────────────────────────
+const fontPanel = document.getElementById('fontPanel');
+document.getElementById('fontBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  fontPanel.classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if (!fontPanel.contains(e.target)) fontPanel.classList.remove('open');
+});
+
+const CJK_FONTS = {
+  system: "'Microsoft YaHei', 'SimSun', sans-serif",
+  heiti: "'SimHei', '黑体', sans-serif",
+  songti: "'SimSun', '宋体', serif",
+  fangsong: "'FangSong', '仿宋', serif",
+  kaiti: "'KaiTi', '楷体', 'STKaiti', serif",
+  notoSans: "'Noto Sans SC', sans-serif",
+  notoSerif: "'Noto Serif SC', serif",
+};
+
+let currentCJK = localStorage.getItem('flow_cjk') || 'system';
+
+function applyFont(f) {
+  document.querySelectorAll('[data-font]').forEach(c => c.classList.toggle('active', c.dataset.font === f));
+  localStorage.setItem('flow_font', f);
+  rebuildFontFamily(f, currentCJK);
+}
+
+function applyCJK(cjk) {
+  currentCJK = cjk;
+  const f = localStorage.getItem('flow_font') || 'system';
+  document.querySelectorAll('[data-cjk]').forEach(c => c.classList.toggle('active', c.dataset.cjk === cjk));
+  localStorage.setItem('flow_cjk', cjk);
+  rebuildFontFamily(f, cjk);
+}
+
+function rebuildFontFamily(latin, cjk) {
+  const latinMap = {
+    system: "system-ui, -apple-system",
+    inter: "'Inter'",
+    poppins: "'Poppins'",
+    lato: "'Lato'",
+  };
+  const latinPart = latinMap[latin] || "system-ui, -apple-system";
+  const cjkPart = CJK_FONTS[cjk] || CJK_FONTS.system;
+  document.documentElement.style.setProperty('--font-family', `${latinPart}, ${cjkPart}, sans-serif`);
+}
+
+function applySize(s) {
+  document.documentElement.style.setProperty('--font-size', s + 'px');
+  document.querySelectorAll('.fp-size').forEach(c => c.classList.toggle('active', c.dataset.size === String(s)));
+  localStorage.setItem('flow_size', s);
+}
+
+document.querySelectorAll('[data-font]').forEach(c => c.addEventListener('click', () => applyFont(c.dataset.font)));
+document.querySelectorAll('[data-cjk]').forEach(c => c.addEventListener('click', () => applyCJK(c.dataset.cjk)));
+document.querySelectorAll('.fp-size').forEach(c => c.addEventListener('click', () => applySize(c.dataset.size)));
+
+applyFont(localStorage.getItem('flow_font') || 'system');
+// 迁移旧缓存值
+const oldCJK = localStorage.getItem('flow_cjk') || 'system';
+if (!['system','songti','heiti','kaiti','fangsong','notoSans','notoSerif'].includes(oldCJK)) localStorage.setItem('flow_cjk', 'system');
+applyCJK(localStorage.getItem('flow_cjk') || 'system');
+applySize(localStorage.getItem('flow_size') || 16);
+
+// ── Theme ─────────────────────────────────────────────────────────────────
+const themeClass = { green: 'theme-green', warm: 'theme-warm', night: 'theme-night' };
+function applyTheme(t) {
+  const cls = themeClass[t] || 'theme-green';
+  const fontCls = [...document.body.classList].filter(c => c.startsWith('font-'));
+  document.body.className = [cls, ...fontCls].filter(Boolean).join(' ');
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === t));
+  localStorage.setItem('flow_theme', t);
+}
+applyTheme(localStorage.getItem('flow_theme') || 'green');
+document.querySelectorAll('.theme-dot').forEach(d => d.addEventListener('click', () => applyTheme(d.dataset.theme)));
+
+
+// ── Lang ─────────────────────────────────────────────────────────────────
+document.getElementById('langBtn').addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('flow_lang', lang);
+  applyI18n();
+  render();
+});
+
+// ── Keyboard shortcuts (macOS: Cmd, Windows: Ctrl) ──────────────────────
+const mod = navigator.platform.includes('Mac') ? 'metaKey' : 'ctrlKey';
+document.addEventListener('keydown', e => {
+  if (e[mod] && e.key === 's') {
+    e.preventDefault();
+    submitNote();
+  }
+});
+
+// ── Init ─────────────────────────────────────────────────────────────────
+openDB().then(async (ok) => {
+  loadTrash();
+  if (ok) {
+    notes = await dbGetAll();
+  }
+  notes.sort((a, b) => b.updatedAt - a.updatedAt);
+
+  // 恢复未提交的草稿
+  const draft = JSON.parse(localStorage.getItem('flow_draft') || 'null');
+  if (draft?.text) {
+    editor.value = draft.text;
+    btnClear.disabled = false;
+    setSaveStatus('saved');
+  }
+
+  applyI18n();
+  render();
+});
+</script>
+</body>
+</html>
