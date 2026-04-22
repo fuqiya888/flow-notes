@@ -355,7 +355,7 @@
         <button class="export-menu-item" id="exportTxt" data-i18n="exportTxt">导出为纯文本</button>
         <label class="export-menu-item" data-i18n="importData" style="margin:0;cursor:pointer">
           <span data-i18n="importData">导入数据</span>
-          <input type="file" id="importFile" accept=".json,.txt" style="display:none">
+          <input type="file" id="importFile" accept=".json,.txt,.md,.markdown" style="display:none">
         </label>
       </div>
     </div>
@@ -453,9 +453,9 @@ const I18N = {
     writing:'书写区', save:'保存', placeholder:'在这里写下你的想法…', fontFamily:'西文字体', fontChinese:'中文字体', fontSize:'字号',
     fontSystem:'系统默认', fontCjkSystem:'系统', empty:'还没有笔记，开始书写吧 ✍️', search:'搜索笔记…',
     imported:'已载入编辑', saved:'已保存', saving:'保存中…', saveFailed:'保存失败',
-    exportMenu:'导出 ▾', exportJson:'导出所有数据', exportTxt:'导出为纯文本',
-    importData:'导入数据', exportDone:'已导出 JSON', exportTxtDone:'已导出文本',
-    importDone:'导入成功', importErr:'导入失败，请检查文件格式（支持 .json 和 .txt）',
+    exportMenu:'导出 ▾', exportJson:'导出所有数据', exportTxt:'导出为纯文本', exportMd:'导出为 Markdown',
+    importData:'导入数据', exportDone:'已导出 JSON', exportTxtDone:'已导出文本', exportMdDone:'已导出 Markdown',
+    importDone:'导入成功', importErr:'导入失败，请检查文件格式（支持 .json / .txt / .md）',
     clearTitle:'清空书写区', clearMsg:'确定清空？内容将丢失且不可恢复。',
     deleteTitle:'删除笔记', deleteMsg:'删除后可在回收站中恢复。',
     cancel:'取消', confirm:'确认',
@@ -467,9 +467,9 @@ const I18N = {
     writing:'Writing', save:'Save', placeholder:'Write your thoughts here…', fontFamily:'Font', fontChinese:'CJK Font', fontSize:'Size',
     fontSystem:'System', fontCjkSystem:'System', empty:'No notes yet. Start writing!', search:'Search notes…',
     imported:'Loaded', saved:'Saved', saving:'Saving…', saveFailed:'Save failed',
-    exportMenu:'Export ▾', exportJson:'Export all data', exportTxt:'Export as text',
-    importData:'Import data', exportDone:'JSON exported', exportTxtDone:'Text exported',
-    importDone:'Import successful', importErr:'Import failed (supports .json and .txt)',
+    exportMenu:'Export ▾', exportJson:'Export all data', exportTxt:'Export as text', exportMd:'Export as Markdown',
+    importData:'Import data', exportDone:'JSON exported', exportTxtDone:'Text exported', exportMdDone:'Markdown exported',
+    importDone:'Import successful', importErr:'Import failed (supports .json / .txt / .md)',
     clearTitle:'Clear editor', clearMsg:'Are you sure? Content will be lost and cannot be recovered.',
     deleteTitle:'Delete note', deleteMsg:'Deleted notes can be restored from trash.',
     cancel:'Cancel', confirm:'Confirm',
@@ -1008,13 +1008,18 @@ document.getElementById('importFile').addEventListener('change', async e => {
       store.clear();
       for (const n of notes) store.put(n);
       await new Promise(r => tx.oncomplete = r);
-    } else if (fileName.endsWith('.txt')) {
-      // TXT 文本文件：按 --- 分隔，每段作为一条新笔记
+    } else if (fileName.endsWith('.txt') || fileName.endsWith('.md') || fileName.endsWith('.markdown')) {
+      // TXT / Markdown 文件：按 --- 分隔，每段作为一条新笔记
       const now = Date.now();
       const blocks = raw.split(/\n---\n/).map(b => b.trim()).filter(b => b.length > 0);
       if (blocks.length === 0) throw new Error('empty');
       for (const block of blocks) {
-        const note = { id: uuid(), content: block, createdAt: now, updatedAt: now };
+        // 清理 Markdown 标题和引用行，只保留正文
+        const content = block
+          .replace(/^## .+\n?/gm, '')
+          .replace(/^> .+\n?/gm, '')
+          .trim();
+        const note = { id: uuid(), content: content, createdAt: now, updatedAt: now };
         imported.push(note);
         await dbPut(note);
         notes.push(note);
