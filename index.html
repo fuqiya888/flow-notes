@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flow</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Poppins:wght@300;400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Poppins:wght@300;400;500&family=Lato:wght@300;400;700&family=Merriweather:wght@300;400&family=Source+Sans+3:wght@300;400;500&family=Nunito:wght@300;400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -24,9 +24,9 @@
       --sidebar-width: 33.33%;
     }
     /* 三套主题配色 */
-    body.theme-green { --bg-sidebar:#F2F6F5; --bg-main:#FDFDFD; --bg-card:#FFFFFF; --bg-card-hover:#F7FAF9; --accent:#5B7F7B; --text:#2D3B39; --text-muted:#9AA8A6; --border:rgba(91,127,123,0.10); }
-    body.theme-warm  { --bg-sidebar:#FEF3F0; --bg-main:#FFFCFA; --bg-card:#FFF8F2; --bg-card-hover:#FFF2EB; --accent:#8B6F5E; --text:#3E2E25; --text-muted:#B0998C; --border:rgba(139,111,94,0.10); }
-    body.theme-night { --bg-sidebar:#EEF1FA; --bg-main:#F9F9FF; --bg-card:#F4F5FE; --bg-card-hover:#ECEEF8; --accent:#5B6AAF; --text:#2D3040; --text-muted:#8B8FAA; --border:rgba(91,106,175,0.10); }
+    body.theme-green { --bg-sidebar:#DFF0E8; --bg-main:#F7FBF9; --bg-card:#FFFFFF; --bg-card-hover:#EEF7F2; --accent:#2E7D5E; --text:#1A3329; --text-muted:#7FA898; --border:rgba(46,125,94,0.12); }
+    body.theme-warm  { --bg-sidebar:#FAE8D8; --bg-main:#FDF6EF; --bg-card:#FFFFFF; --bg-card-hover:#FDF0E4; --accent:#C0622F; --text:#3B1F0F; --text-muted:#B08060; --border:rgba(192,98,47,0.12); }
+    body.theme-night { --bg-sidebar:#252526; --bg-main:#1E1E1E; --bg-card:#2D2D2D; --bg-card-hover:#333333; --accent:#7A9E9F; --text:#D4D4D4; --text-muted:#6A6A6A; --border:rgba(255,255,255,0.06); }
 
     /* 西文字体和中文字体统一由 JS rebuildFontFamily 控制，不再用 CSS class */
 
@@ -44,7 +44,7 @@
     }
     .logo {
       font-family: 'Inter', sans-serif; font-weight: 500;
-      font-size: 20px; color: #5B7F7B; letter-spacing: 2px;
+      font-size: 20px; color: var(--accent); letter-spacing: 2px;
       user-select: none;
     }
     .header-right { display: flex; align-items: center; gap: 12px; }
@@ -98,9 +98,9 @@
       border-color: var(--text); transform: scale(1.15);
       box-shadow: 0 0 0 2px rgba(0,0,0,0.06);
     }
-    .theme-dot.t-green { background: #7bbf8a; }
-    .theme-dot.t-warm  { background: #e8a090; }
-    .theme-dot.t-night { background: #8b9de8; }
+    .theme-dot.t-green { background: #2E7D5E; }
+    .theme-dot.t-warm  { background: #C0622F; }
+    .theme-dot.t-night { background: #555555; }
     .export-dropdown {
       position: relative;
     }
@@ -346,11 +346,9 @@
   </div>
   <div class="header-right">
     <span class="font-btn" id="fontBtn">Aa</span>
-    <div class="theme-switcher">
-      <div class="theme-dot t-green active" data-theme="green" title="春日田野"></div>
-      <div class="theme-dot t-warm"         data-theme="warm"  title="暮色温柔"></div>
-      <div class="theme-dot t-night"        data-theme="night" title="星空沉思"></div>
-    </div>
+    <span class="header-btn" id="themeBtn" title="切换主题">
+      <span id="themeDot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#2E7D5E;vertical-align:middle"></span>
+    </span>
     <span class="header-btn" id="langBtn">EN</span>
     <div class="export-dropdown">
       <button class="header-btn" id="exportBtn" data-i18n="exportMenu">导出 ▾</button>
@@ -364,16 +362,21 @@
       </div>
     </div>
     <span class="header-btn" id="trashBtn" title="回收站">🗑️</span>
+    <span class="header-btn" id="syncBtn" title="云同步">☁</span>
   </div>
 </header>
 
 <div class="font-panel" id="fontPanel">
   <div class="fp-label" data-i18n="fontFamily">字体</div>
   <div class="font-panel-row">
-    <span class="fp-chip active" data-font="system" data-i18n="fontSystem">系统默认</span>
+    <span class="fp-chip active" data-font="system" data-i18n="fontSystem">系统</span>
     <span class="fp-chip" data-font="inter">Inter</span>
     <span class="fp-chip" data-font="poppins">Poppins</span>
     <span class="fp-chip" data-font="lato">Lato</span>
+    <span class="fp-chip" data-font="merriweather">Merriweather</span>
+    <span class="fp-chip" data-font="sourcesans">Source Sans</span>
+    <span class="fp-chip" data-font="nunito">Nunito</span>
+    <span class="fp-chip" data-font="playfair">Playfair</span>
   </div>
   <div class="fp-label" data-i18n="fontChinese">中文字体</div>
   <div class="font-panel-row">
@@ -391,6 +394,21 @@
     <span class="fp-size active" data-size="16">默认</span>
     <span class="fp-size" data-size="18">大</span>
   </div>
+</div>
+
+<div class="font-panel" id="syncPanel">
+  <div class="fp-label">☁ 坚果云同步</div>
+  <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+    <input id="syncUser" placeholder="账号（邮箱）" autocomplete="off"
+      style="padding:5px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.12);font-size:12px;outline:none;background:transparent;color:var(--text)">
+    <input id="syncPass" type="password" placeholder="应用密码"
+      style="padding:5px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.12);font-size:12px;outline:none;background:transparent;color:var(--text)">
+  </div>
+  <div class="font-panel-row">
+    <span class="fp-chip" id="btnUpload">↑ 上传到云端</span>
+    <span class="fp-chip" id="btnDownload">↓ 从云端下载</span>
+  </div>
+  <div id="syncStatus" style="font-size:11px;color:var(--text-muted);margin-top:8px;min-height:16px"></div>
 </div>
 
 <main>
@@ -455,7 +473,7 @@
 const I18N = {
   zh: {
     writing:'书写区', save:'保存', placeholder:'在这里写下你的想法…', fontFamily:'西文字体', fontChinese:'中文字体', fontSize:'字号',
-    fontSystem:'系统默认', fontCjkSystem:'系统', empty:'还没有笔记，开始书写吧 ✍️', search:'搜索笔记…',
+    fontSystem:'系统', fontCjkSystem:'系统', empty:'还没有笔记，开始书写吧 ✍️', search:'搜索笔记…',
     imported:'已载入编辑', saved:'已保存', saving:'保存中…', saveFailed:'保存失败',
     exportMenu:'导出 ▾', exportJson:'导出所有数据', exportTxt:'导出为纯文本', exportMd:'导出为 Markdown',
     importData:'导入数据', exportDone:'已导出 JSON', exportTxtDone:'已导出文本', exportMdDone:'已导出 Markdown',
@@ -1085,6 +1103,10 @@ function rebuildFontFamily(latin, cjk) {
     inter: "'Inter'",
     poppins: "'Poppins'",
     lato: "'Lato'",
+    merriweather: "'Merriweather'",
+    sourcesans: "'Source Sans 3'",
+    nunito: "'Nunito'",
+    playfair: "'Playfair Display'",
   };
   const latinPart = latinMap[latin] || "system-ui, -apple-system";
   const cjkPart = CJK_FONTS[cjk] || CJK_FONTS.system;
@@ -1120,17 +1142,89 @@ applyCJK(localStorage.getItem('flow_cjk') || 'system');
 applySize(parseInt(localStorage.getItem('flow_size')) || 16);
 
 // ── Theme ─────────────────────────────────────────────────────────────────
+const themeOrder = ['green', 'warm', 'night'];
 const themeClass = { green: 'theme-green', warm: 'theme-warm', night: 'theme-night' };
+const themeDotColor = { green: '#2E7D5E', warm: '#C0622F', night: '#555555' };
+
 function applyTheme(t) {
   const cls = themeClass[t] || 'theme-green';
   const fontCls = [...document.body.classList].filter(c => c.startsWith('font-'));
   document.body.className = [cls, ...fontCls].filter(Boolean).join(' ');
-  document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.theme === t));
+  document.getElementById('themeDot').style.background = themeDotColor[t];
   localStorage.setItem('flow_theme', t);
 }
-applyTheme(localStorage.getItem('flow_theme') || 'green');
-document.querySelectorAll('.theme-dot').forEach(d => d.addEventListener('click', () => applyTheme(d.dataset.theme)));
 
+applyTheme(localStorage.getItem('flow_theme') || 'green');
+
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const cur = localStorage.getItem('flow_theme') || 'green';
+  const next = themeOrder[(themeOrder.indexOf(cur) + 1) % themeOrder.length];
+  applyTheme(next);
+});
+
+
+// ── Cloud Sync (坚果云 WebDAV) ────────────────────────────────────────────
+const PROXY = 'http://localhost:19527';
+const DAV_PATH = '/dav/flow-notes/data.json';
+
+const syncPanel  = document.getElementById('syncPanel');
+const syncStatus = document.getElementById('syncStatus');
+const syncUserEl = document.getElementById('syncUser');
+const syncPassEl = document.getElementById('syncPass');
+
+// 恢复保存的账号（密码不持久化）
+syncUserEl.value = localStorage.getItem('sync_user') || '';
+
+document.getElementById('syncBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  syncPanel.classList.toggle('open');
+  document.getElementById('fontPanel').classList.remove('open');
+});
+document.addEventListener('click', e => {
+  if (!syncPanel.contains(e.target) && e.target.id !== 'syncBtn')
+    syncPanel.classList.remove('open');
+});
+
+function syncAuth() {
+  const u = syncUserEl.value.trim();
+  const p = syncPassEl.value.trim();
+  if (!u || !p) { syncStatus.textContent = '请填写账号和应用密码'; return null; }
+  localStorage.setItem('sync_user', u);
+  return 'Basic ' + btoa(u + ':' + p);
+}
+
+document.getElementById('btnUpload').addEventListener('click', async () => {
+  const auth = syncAuth(); if (!auth) return;
+  syncStatus.textContent = '上传中…';
+  try {
+    // 确保目录存在
+    await fetch(PROXY + '/dav/flow-notes/', { method: 'MKCOL', headers: { Authorization: auth } });
+    const body = JSON.stringify(notes);
+    const r = await fetch(PROXY + DAV_PATH, {
+      method: 'PUT', headers: { Authorization: auth, 'Content-Type': 'application/json' },
+      body
+    });
+    syncStatus.textContent = r.ok ? `✓ 上传成功（${notes.length} 条）` : `✗ 失败 ${r.status}`;
+  } catch { syncStatus.textContent = '✗ 无法连接代理，请先运行 node proxy.js'; }
+});
+
+document.getElementById('btnDownload').addEventListener('click', async () => {
+  const auth = syncAuth(); if (!auth) return;
+  syncStatus.textContent = '下载中…';
+  try {
+    const r = await fetch(PROXY + DAV_PATH, { headers: { Authorization: auth } });
+    if (!r.ok) { syncStatus.textContent = `✗ 失败 ${r.status}（云端可能还没有数据）`; return; }
+    const data = await r.json();
+    if (!Array.isArray(data)) throw new Error();
+    await dbClear();
+    notes = data;
+    for (const n of notes) await dbPut(n);
+    sortNotes(); render();
+    syncStatus.textContent = `✓ 下载成功（${notes.length} 条）`;
+  } catch (e) {
+    syncStatus.textContent = e.message?.includes('fetch') ? '✗ 无法连接代理，请先运行 node proxy.js' : '✗ 数据格式错误';
+  }
+});
 
 // ── Lang ─────────────────────────────────────────────────────────────────
 document.getElementById('langBtn').addEventListener('click', () => {
