@@ -5,3 +5,11 @@ font-test.html
 Thumbs.db
 .DS_Store
 desktop.ini
+
+# Log files
+*.log
+server.log
+
+# System files
+nul
+ Thumbs

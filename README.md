@@ -4,7 +4,8 @@
 
 ## 本地使用
 
-直接用浏览器打开 `index.html` 即可。
+双击 `start.bat` 即可启动（需要 Node.js）。
+浏览器会自动打开 http://localhost:18888
 
 ## 坚果云同步（跨设备）
 
@@ -21,10 +22,10 @@
 
 ```bash
 cd C:/Users/tianq/flow-notes
-node proxy.js
+node server.js
 ```
 
-看到 `proxy running at http://localhost:9527` 即成功，**保持此窗口运行**。
+看到 `Flow Notes running at http://localhost:18888` 即成功，**保持此窗口运行**。
 
 ### 第三步：同步数据
 
@@ -36,7 +37,7 @@ node proxy.js
 ### 另一台电脑同步
 
 1. 把 `flow-notes` 文件夹复制过去（或从坚果云同步文件夹获取）
-2. 运行 `node proxy.js`
-3. 打开 `index.html` → ☁ → 填账号密码 → 「↓ 从云端下载」
+2. 运行 `node server.js`
+3. 打开 `http://localhost:18888` → ☁ → 填账号密码 → 「↓ 从云端下载」
 
 > 应用密码不会保存在代码里，每次打开需重新输入密码（账号会记住）。
